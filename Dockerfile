@@ -6,5 +6,4 @@ COPY package.json ./
 COPY package-lock.json ./
 RUN npm install --production
 COPY . .
-RUN npm run migration:run
 RUN npm run build

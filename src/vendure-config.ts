@@ -95,7 +95,7 @@ export const config: VendureConfig = {
             // to be set manually to match your production url.
             assetUrlPrefix: IS_DEV ? undefined : 'https://www.my-shop.com/assets/',
         }),
-        //DefaultJobQueuePlugin.init({ useDatabaseForBuffer: false }),
+        DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),
         DefaultSearchPlugin.init({ bufferUpdates: false, indexStockStatus: true }),
         EmailPlugin.init({
             devMode: true,

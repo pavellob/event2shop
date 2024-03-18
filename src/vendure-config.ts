@@ -42,15 +42,26 @@ export const config: VendureConfig = {
           secret: process.env.COOKIE_SECRET,
         },
     },
-    dbConnectionOptions: IS_DEV ? {
-        type: 'better-sqlite3',
+    dbConnectionOptions: IS_DEV ? 
+    {
+        type: 'postgres',
         // See the README.md "Migrations" section for an explanation of
         // the `synchronize` and `migrations` options.
         synchronize: false,
-        migrations: [path.join(__dirname, './migrations/*.+(js|ts)')],
+        migrations: [path.join(__dirname, './migrations/*.+(ts|js)')],
         logging: false,
-        database: path.join(__dirname, '../vendure.sqlite'),
-    } :
+        database: process.env.DB_NAME,
+        schema: process.env.DB_SCHEMA,
+        host: process.env.DB_HOST,
+        url: process.env.DB_URL,
+        port: process.env.DB_PORT ? +process.env.DB_PORT : undefined,
+        username: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD,
+        ssl: process.env.DB_CA_CERT ? {
+            ca: process.env.DB_CA_CERT,
+        } : undefined,
+    }
+    :
     {
         type: 'postgres',
         // See the README.md "Migrations" section for an explanation of

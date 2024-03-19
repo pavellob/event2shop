@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { Ctx, ProductService, RequestContext } from '@vendure/core';
 
 @Controller('hooks/cal-co')
@@ -6,8 +6,8 @@ export class CalCoHookController {
     constructor(private productService: ProductService) {
     }
 
-    @Get()
-    findAll(@Ctx() ctx: RequestContext) {
-        return console.log("call");
+    @Post()
+    createBooking(@Ctx() ctx: RequestContext, @Body() body: any) {
+        return console.log(JSON.stringify(body));
     }
 }

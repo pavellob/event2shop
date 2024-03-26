@@ -22,6 +22,7 @@ export class CalCoService {
     handleHook(ctx: RequestContext, booking: Booking) {
       switch (booking.triggerEvent) {
         case "BOOKING_CREATED":
+          console.log(JSON.stringify(booking.payload.attendees))
           return this.customerService.create(ctx, {
             emailAddress: booking.payload.attendees[0].email,
             firstName: booking.payload.attendees[0].name.split(" ")[0],

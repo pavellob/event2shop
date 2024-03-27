@@ -18,15 +18,14 @@ export const eventFulfillmentHandler = new FulfillmentHandler({
             value: 'Generates product keys for the event downloevent',
         },
     ],
-
     args: {},
     init: injector => {
         connection = injector.get(TransactionalConnection);
         service = injector.get(CalCoService);
     },
-    createFulfillment: async (ctx, orders, lines) => {
+    createFulfillment: async (ctx, orders, lines, args) => {
         const eventUrls: string[] = [];
-
+        console.log(args)
         const orderLines = await connection.getRepository(ctx, OrderLine).find({
             where: {
                 id: In(lines.map(l => l.orderLineId)),
@@ -37,8 +36,7 @@ export const eventFulfillmentHandler = new FulfillmentHandler({
         });
         for (const orderLine of orderLines) {
             if (orderLine.productVariant.customFields.isEvent) {
-                // This is a event product, so generate a downloevent url
-                await service.findAll();
+                // await serv
             }
         }
         return {

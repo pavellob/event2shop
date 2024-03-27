@@ -4,7 +4,7 @@ https://docs.nestjs.com/providers#services
 
 import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
-import { CustomerService, RequestContext, RequestContextService } from "@vendure/core";
+import { CustomProductVariantFields, CustomerService, ErrorResult, OrderService, ProductVariant, ProductVariantService, RequestContext, RequestContextService, ShippingMethod, TransactionalConnection, VendureEntity } from "@vendure/core";
 import { Booking } from "../types";
 
 @Injectable()
@@ -12,23 +12,66 @@ export class CalCoService {
     constructor(
       private readonly httpService: HttpService,
       private customerService: CustomerService,
-      private requestService: RequestContextService
+      private orderService: OrderService,
+      private transactionalConnection: TransactionalConnection,
+      private productVariantService: ProductVariantService,
       ) {}
 
-    findAll() {
-
-      return this.httpService.axiosRef.get('/event-types').then(data => data.data.event_types.map((i: {link: string}) => console.log(i.link)));
-    }
-
     async handleHook(ctx: RequestContext, booking: Booking) {
+      console.log(JSON.stringify(booking))
       switch (booking.triggerEvent) {
         case "BOOKING_CREATED":
-          console.log(JSON.stringify(booking.payload.attendees))
-          await this.customerService.create(ctx, {
+          const customer = await this.customerService.create(ctx, {
             emailAddress: booking.payload.attendees[0].email,
             firstName: booking.payload.attendees[0].name.split(" ")[0],
             lastName: booking.payload.attendees[0].name.split(" ")[1],
           });
+          if (customer instanceof VendureEntity) {
+            const order = await this.orderService.create(ctx, customer.id);
+            this.orderService.addCustomerToOrder(ctx, order.id, customer);
+
+            const repoPV = this.transactionalConnection.rawConnection.getRepository(ProductVariant);
+            const externalBookingLink = `${booking.payload.bookerUrl}/team/${booking.payload.team.name}/${booking.payload.type}`;
+            const isEvent = true;
+            const variant = await repoPV.findOne({
+              where: {
+                customFields: {
+                  externalBookingLink,
+                  isEvent,
+                }
+              }
+            });
+
+            if (!variant) {
+              throw new Error(`Variant with ${externalBookingLink} doesn't exist`)
+            }
+
+
+            this.orderService.addItemToOrder(ctx, order.id, variant.id, 1);
+
+            const repoSHM = this.transactionalConnection.rawConnection.getRepository(ShippingMethod);
+            const shippingMethod = await repoSHM.findOne({
+              where: {
+                customFields: {
+                  isEvent,
+                }
+              }
+            })
+
+            if(!shippingMethod) {
+              throw new Error(`Shipping method for event products doesn't exist`)
+            }
+
+
+            await this.orderService.setShippingAddress(ctx, order.id, {
+              countryCode: "TH",
+              streetLine1: ""
+            });
+            await this.orderService.setShippingMethod(ctx, order.id, [shippingMethod.id]);
+            await this.orderService.transitionToState(ctx, order.id, "Shipped")
+
+          }
+          
           break;
       
         default:

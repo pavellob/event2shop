@@ -51,6 +51,9 @@ export interface Booking {
     triggerEvent: string;
     payload: {
         bookerUrl: string;
+        team: {
+            name: string;
+        }
         type: string;
         title: string;
         description: string;

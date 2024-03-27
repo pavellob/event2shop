@@ -31,21 +31,19 @@ export class CalCoService {
             this.orderService.addCustomerToOrder(ctx, order.id, customer);
 
             const repoPV = this.transactionalConnection.rawConnection.getRepository(ProductVariant);
-            const externalBookingLink = `${booking.payload.bookerUrl}/team/${booking.payload.team.name}/${booking.payload.type}`;
-            const isEvent = true;
-            const variant = await repoPV.findOne({
-              where: {
-                customFields: {
-                  externalBookingLink,
-                  isEvent,
+            const vendureId = booking.payload.userFieldsResponses.vendureId.value;
+            let variant: ProductVariant | null = null;
+            if(typeof vendureId === "string") {
+              variant = await repoPV.findOne({
+                where: {
+                  id: vendureId
                 }
-              }
-            });
-
-            if (!variant) {
-              throw new Error(`Variant with ${externalBookingLink} doesn't exist`)
+              });
             }
-
+            if(!variant) {
+              throw new Error("No variant");
+              
+            }
 
             this.orderService.addItemToOrder(ctx, order.id, variant.id, 1);
 
@@ -53,7 +51,7 @@ export class CalCoService {
             const shippingMethod = await repoSHM.findOne({
               where: {
                 customFields: {
-                  isEvent,
+                  isEvent: true,
                 }
               }
             })

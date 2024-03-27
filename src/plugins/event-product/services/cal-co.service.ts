@@ -45,7 +45,7 @@ export class CalCoService {
               
             }
 
-            this.orderService.addItemToOrder(ctx, order.id, variant.id, 1);
+            await this.orderService.addItemToOrder(ctx, order.id, variant.id, 1);
 
             const repoSHM = this.transactionalConnection.rawConnection.getRepository(ShippingMethod);
             const shippingMethod = await repoSHM.findOne({

@@ -16,13 +16,14 @@ export const eventOrderProcess: OrderProcess<string> = {
     },
     async onTransitionEnd(fromState, toState, data) {
         if (
-            toState === 'Shipped'
+            fromState === 'ArrangingPayment' &&
+            (toState === 'PaymentAuthorized' || toState === 'PaymentSettled')
         ) {
             const eventOrderLines = data.order.lines.filter(l => l.productVariant.customFields.isEvent);
             if (eventOrderLines.length) {
                 await orderService.createFulfillment(data.ctx, {
                     lines: eventOrderLines.map(l => ({ orderLineId: l.id, quantity: l.quantity })),
-                    handler: { code: eventFulfillmentHandler.code, arguments: [{name: "message", value: "hello"}] },
+                    handler: { code: eventFulfillmentHandler.code, arguments: [data.ctx.req?.body] },
                 });
             }
         }

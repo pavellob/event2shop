@@ -1,4 +1,4 @@
-import { FulfillmentHandler, LanguageCode, OrderLine, TransactionalConnection } from '@vendure/core';
+import { FulfillmentHandler, LanguageCode, OrderLine, RequestContext, TransactionalConnection } from '@vendure/core';
 import { In } from 'typeorm';
 import { CalCoService } from '../services/cal-co.service';
 
@@ -18,15 +18,13 @@ export const eventFulfillmentHandler = new FulfillmentHandler({
             value: 'Generates product keys for the event downloevent',
         },
     ],
-
     args: {},
     init: injector => {
         connection = injector.get(TransactionalConnection);
         service = injector.get(CalCoService);
     },
-    createFulfillment: async (ctx, orders, lines) => {
+    createFulfillment: async (ctx, orders, lines, args) => {
         const eventUrls: string[] = [];
-
         const orderLines = await connection.getRepository(ctx, OrderLine).find({
             where: {
                 id: In(lines.map(l => l.orderLineId)),
@@ -37,8 +35,7 @@ export const eventFulfillmentHandler = new FulfillmentHandler({
         });
         for (const orderLine of orderLines) {
             if (orderLine.productVariant.customFields.isEvent) {
-                // This is a event product, so generate a downloevent url
-                await service.findAll();
+                eventUrls.push(await generateEventUrl(ctx))
             }
         }
         return {
@@ -51,10 +48,8 @@ export const eventFulfillmentHandler = new FulfillmentHandler({
     },
 });
 
-function generateEventUrl(orderLine: OrderLine) {
-    // This is a dummy function that would generate a downloevent url for the given OrderLine
-    // by interfacing with some external system that manages access to the event product.
-    // In this example, we just generate a random string.
-    const eventUrl = `https://example.com/downloevent?key=${Math.random().toString(36).substring(7)}`;
+function generateEventUrl(ctx: RequestContext) {
+    const  booking = ctx.req?.body;
+    const eventUrl = `${booking.payload.bookerUrl}/booking/${booking.payload.uid}`;
     return Promise.resolve(eventUrl);
 }

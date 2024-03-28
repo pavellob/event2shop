@@ -33,6 +33,15 @@ import { CalCoHookController } from "./controllers/cal-co.hook.controller";
       ],
       public: true,
     });
+    config.customFields.ProductVariant.push({
+      type: "string",
+      name: "externalBookingLink",
+      nullable: true,      
+      label: [
+        { languageCode: LanguageCode.en, value: "Related cal.com booking for that event" },
+      ],
+      public: true,
+    });
     config.customFields.ShippingMethod.push({
       type: "boolean",
       name: "isEvent",

@@ -32,7 +32,7 @@ export class CalCoService {
 
   private getSKUFromShowSelectonField(field : string) {
     return field.includes("#") 
-    ? field.trim().split(" ").filter((value) => field.startsWith("#")).shift()
+    ? field.trim().split(" ").filter((value) => value.startsWith("#")).shift()?.slice(1)
     : field.trim().toLocaleLowerCase().replace(" ","-");
   }
 

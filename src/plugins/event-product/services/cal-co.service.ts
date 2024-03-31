@@ -19,7 +19,6 @@ import {
   VendureEntity,
 } from "@vendure/core";
 import { Booking } from "../types";
-import { PaymentStateMachine } from "@vendure/core/dist/service/helpers/payment-state-machine/payment-state-machine";
 
 @Injectable()
 export class CalCoService {
@@ -30,6 +29,12 @@ export class CalCoService {
     private transactionalConnection: TransactionalConnection,
     private productVariantService: ProductVariantService
   ) {}
+
+  private getSKUFromShowSelectonField(field : string) {
+    return field.includes("#") 
+    ? field.trim().split(" ").filter((value) => field.startsWith("#")).shift()
+    : field.trim().toLocaleLowerCase().replace(" ","-");
+  }
 
   async handleHook(ctx: RequestContext, booking: Booking) {
     console.log(JSON.stringify(booking));
@@ -49,8 +54,8 @@ export class CalCoService {
         if (!existedCustomer) {
           const newCustomer = await this.customerService.create(ctx, {
             emailAddress: booking.payload.attendees[0].email,
-            firstName: booking.payload.attendees[0].name.split(" ")[0],
-            lastName: booking.payload.attendees[0].name.split(" ")[1],
+            firstName: booking.payload.attendees[0].firstName || booking.payload.attendees[0].name.split(" ")[0],
+            lastName: booking.payload.attendees[0].lastName || booking.payload.attendees[0].name.split(" ")[1] || "",
           });
           if (newCustomer instanceof Customer) {
             customer = newCustomer;
@@ -67,12 +72,13 @@ export class CalCoService {
           this.transactionalConnection.rawConnection.getRepository(
             ProductVariant
           );
-        const vendureId = booking.payload.userFieldsResponses.vendureId.value;
+        let sku = booking.payload.userFieldsResponses.sku.value;
         let variant: ProductVariant | null = null;
-        if (typeof vendureId === "string") {
+        if (typeof sku === "string") {
+          sku = sku.trim().toLocaleLowerCase().replace(" ","-");
           variant = await repoPV.findOne({
             where: {
-              id: vendureId,
+              sku, 
             },
           });
         }
@@ -81,7 +87,6 @@ export class CalCoService {
         }
 
         const r = await this.orderService.addItemToOrder(ctx, order.id, variant.id, 1);
-        console.log(r);
 
         const repoSHM =
           this.transactionalConnection.rawConnection.getRepository(
@@ -112,7 +117,6 @@ export class CalCoService {
         const paymentResult = await this.orderService.addPaymentToOrder(ctx, order.id, {
           method: "manual",
           metadata: {
-            // source: "cal.com"
           }
         })
         const payments = await this.orderService.getOrderPayments(ctx, order.id)

@@ -30,10 +30,15 @@ export class CalCoService {
     private productVariantService: ProductVariantService
   ) {}
 
-  private getSKUFromShowSelectonField(field : string) {
-    return field.includes("#") 
-    ? field.trim().split(" ").filter((value) => value.startsWith("#")).shift()?.slice(1)
-    : field.trim().toLocaleLowerCase().replace(" ","-");
+  private getSKUFromShowSelectonField(field: string) {
+    return field.includes("#")
+      ? field
+          .trim()
+          .split(" ")
+          .filter((value) => value.startsWith("#"))
+          .shift()
+          ?.slice(1)
+      : field.trim().toLocaleLowerCase().replace(" ", "-");
   }
 
   async handleHook(ctx: RequestContext, booking: Booking) {
@@ -54,8 +59,13 @@ export class CalCoService {
         if (!existedCustomer) {
           const newCustomer = await this.customerService.create(ctx, {
             emailAddress: booking.payload.attendees[0].email,
-            firstName: booking.payload.attendees[0].firstName || booking.payload.attendees[0].name.split(" ")[0],
-            lastName: booking.payload.attendees[0].lastName || booking.payload.attendees[0].name.split(" ")[1] || "",
+            firstName:
+              booking.payload.attendees[0].firstName ||
+              booking.payload.attendees[0].name.split(" ")[0],
+            lastName:
+              booking.payload.attendees[0].lastName ||
+              booking.payload.attendees[0].name.split(" ")[1] ||
+              "",
           });
           if (newCustomer instanceof Customer) {
             customer = newCustomer;
@@ -72,13 +82,14 @@ export class CalCoService {
           this.transactionalConnection.rawConnection.getRepository(
             ProductVariant
           );
-        let sku = booking.payload.userFieldsResponses.sku.value;
         let variant: ProductVariant | null = null;
-        if (typeof sku === "string") {
-          sku = sku.trim().toLocaleLowerCase().replace(" ","-");
+        if (typeof booking.payload.userFieldsResponses.sku.value === "string") {
+          let sku = this.getSKUFromShowSelectonField(
+            booking.payload.userFieldsResponses.sku.value
+          );
           variant = await repoPV.findOne({
             where: {
-              sku, 
+              sku,
             },
           });
         }
@@ -86,7 +97,12 @@ export class CalCoService {
           throw new Error("No variant");
         }
 
-        const r = await this.orderService.addItemToOrder(ctx, order.id, variant.id, 1);
+        const r = await this.orderService.addItemToOrder(
+          ctx,
+          order.id,
+          variant.id,
+          1
+        );
 
         const repoSHM =
           this.transactionalConnection.rawConnection.getRepository(
@@ -111,27 +127,47 @@ export class CalCoService {
         await this.orderService.setShippingMethod(ctx, order.id, [
           shippingMethod.id,
         ]);
-        
-        const result = await this.orderService.transitionToState(ctx, order.id, this.orderService.getNextOrderStates(order)[0])
-        const payResult = await this.orderService.getEligiblePaymentMethods(ctx, order.id);
-        const paymentResult = await this.orderService.addPaymentToOrder(ctx, order.id, {
-          method: "manual",
-          metadata: {
+
+        const result = await this.orderService.transitionToState(
+          ctx,
+          order.id,
+          this.orderService.getNextOrderStates(order)[0]
+        );
+        const payResult = await this.orderService.getEligiblePaymentMethods(
+          ctx,
+          order.id
+        );
+        const paymentResult = await this.orderService.addPaymentToOrder(
+          ctx,
+          order.id,
+          {
+            method: "manual",
+            metadata: {},
           }
-        })
-        const payments = await this.orderService.getOrderPayments(ctx, order.id)
-        await this.orderService.settlePayment(ctx, payments[0].id)
-        order = await this.orderService.findOne(ctx, order.id) || order;
-        const fullfilments = await this.orderService.getOrderFulfillments(ctx, order);
+        );
+        const payments = await this.orderService.getOrderPayments(
+          ctx,
+          order.id
+        );
+        await this.orderService.settlePayment(ctx, payments[0].id);
+        order = (await this.orderService.findOne(ctx, order.id)) || order;
+        const fullfilments = await this.orderService.getOrderFulfillments(
+          ctx,
+          order
+        );
 
-        await Promise.all(fullfilments.map(f => this.orderService.transitionFulfillmentToState(ctx, f.id, "Shipped")))
+        await Promise.all(
+          fullfilments.map((f) =>
+            this.orderService.transitionFulfillmentToState(ctx, f.id, "Shipped")
+          )
+        );
 
-        await this.orderService.transitionToState(ctx, order.id, "Shipped")
+        await this.orderService.transitionToState(ctx, order.id, "Shipped");
 
-          break;
-          
-          default:
         break;
-      }
+
+      default:
+        break;
+    }
   }
 }

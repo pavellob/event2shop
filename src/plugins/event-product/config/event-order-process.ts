@@ -23,7 +23,7 @@ export const eventOrderProcess: OrderProcess<string> = {
             if (eventOrderLines.length) {
                 await orderService.createFulfillment(data.ctx, {
                     lines: eventOrderLines.map(l => ({ orderLineId: l.id, quantity: l.quantity })),
-                    handler: { code: eventFulfillmentHandler.code, arguments: [data.ctx.req?.body] },
+                    handler: { code: eventFulfillmentHandler.code, arguments: [] },
                 });
             }
         }

@@ -46,6 +46,9 @@ export interface Response {
     value?: string | string[];
     isHidden: boolean;
 }
+export enum CalcomBookingStatus {
+    BOOKING_CREATED = 'BOOKING_CREATED',
+  };
 
 export interface Booking {
     triggerEvent: string;

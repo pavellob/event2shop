@@ -176,12 +176,6 @@ export class CalCoService {
       )
     );
 
-    const shippedresult = await this.orderService.transitionToState(ctx, order.id, "Shipped")
-
-    if(!(shippedresult instanceof Order)) {
-      throw new Error(shippedresult.message) 
-    }
-    order = shippedresult;
     return order;
   }
   
@@ -194,7 +188,7 @@ export class CalCoService {
       if(!handler) {
         throw new Error(`Handler for that event doesn't exist`);
       }
-      result = await handler(ctx, booking);
+      result = await handler.bind(this)(ctx, booking);
     } catch (error) {
       if (error instanceof Error) {
         Logger.warn(error.message)

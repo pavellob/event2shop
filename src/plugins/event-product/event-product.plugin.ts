@@ -33,6 +33,24 @@ import { CalCoHookController } from "./controllers/cal-co.hook.controller";
       ],
       public: true,
     });
+    config.customFields.ProductVariant.push({
+      type: "string",
+      name: "eventLink",
+      nullable: true,      
+      label: [
+        { languageCode: LanguageCode.en, value: "Related cal.com booking for that event" },
+      ],
+      public: true,
+    });
+    config.customFields.Order.push({
+      type: "string",
+      name: "bookingLink",
+      nullable: true,
+      label: [
+        { languageCode: LanguageCode.en, value: "Urls of any event purchases" },
+      ],
+      public: true,
+    });
     config.customFields.ShippingMethod.push({
       type: "boolean",
       name: "isEvent",
@@ -47,9 +65,8 @@ import { CalCoHookController } from "./controllers/cal-co.hook.controller";
     });
     config.customFields.Fulfillment.push({
       type: "string",
-      name: "eventUrls",
+      name: "bookingLink",
       nullable: true,
-      list: true,
       label: [
         { languageCode: LanguageCode.en, value: "Urls of any event purchases" },
       ],

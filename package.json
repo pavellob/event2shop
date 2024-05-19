@@ -1,6 +1,6 @@
 {
   "name": "event2shop",
-  "version": "1.1.0",
+  "version": "1.0.3",
   "private": false,
   "scripts": {
     "dev:server": "ts-node ./src/index.ts",

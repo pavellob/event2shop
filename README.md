@@ -1,4 +1,4 @@
-# event2shop
+# Event2shop
 
 This project was generated with [`@vendure/create`](https://github.com/vendure-ecommerce/vendure/tree/master/packages/create).
 

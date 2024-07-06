@@ -2,7 +2,7 @@ name: Semantic Release for all
 on:
   push:
     branches:
-      - next
+      - master
 jobs:
   sync:
     runs-on: ubuntu-latest
